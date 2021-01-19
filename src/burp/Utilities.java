@@ -7,9 +7,8 @@ import org.apache.jmeter.protocol.amf.util.AmfXmlConverter;
 
 public class Utilities {
 	static final String X_BURP_DESERIALIZED = "X-Burp: Deserialized";
-	static final String X_BURP_INITDESERIALIZED = "X-Burp: InitDeserialized";
-
 	static final String X_BURP_SERIALIZED = "X-Burp: Serialized";
+	
 	static String DOUBLELINEBREAK = "\\r\\n\\r\\n";
 	static String LINESEPARATOR = System.getProperty("line.separator");
 
@@ -23,43 +22,24 @@ public class Utilities {
 		return reqBody;
 	}
 
-	public static byte[] initDeserializeProxyItem(byte[] message) {
-		try {
-			String testStr = new String(message);
-			String[] strHeadersAndContent = testStr.split(DOUBLELINEBREAK);
-//			if (!strHeadersAndContent[0].toLowerCase().split(CONTENT_TYPE)[1].split(LINESEPARATOR)[0].equals(AMF_CONTENT_TYPE))
-//				return message;
-			String xml = AmfXmlConverter.convertAmfMessageToXml(getBody(message));
-			if (xml == null) {
-				return null;
-			}
-			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(xml.length()));
-			return (headerWithUpdatedLength + LINESEPARATOR + X_BURP_INITDESERIALIZED + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return message;
-		}
-	}
-
+	//deserialize body and add header indicating deserialization
 	public static byte[] deserializeProxyItem(byte[] message) {
 		try {
 			String testStr = new String(message);
 			String[] strHeadersAndContent = testStr.split(DOUBLELINEBREAK);
-//			if (!strHeadersAndContent[0].toLowerCase().split(CONTENT_TYPE)[1].split(LINESEPARATOR)[0].equals(AMF_CONTENT_TYPE))
-//				return message;
 			String xml = AmfXmlConverter.convertAmfMessageToXml(getBody(message));
 			if (xml == null) {
 				return null;
 			}
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(xml.length()));
 			return (headerWithUpdatedLength + LINESEPARATOR + X_BURP_DESERIALIZED + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
-			//return (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return message;
 		}
 	}
 
+	//serialize body and add header indicating serialization
 	public static byte[] serializeProxyItem(byte[] message) {
 
 		try {
@@ -70,7 +50,6 @@ public class Utilities {
 				return null;
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(content.length));
 			byte[] header = (headerWithUpdatedLength + LINESEPARATOR + X_BURP_SERIALIZED + LINESEPARATOR + LINESEPARATOR).getBytes();
-			//byte[] header = (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR).getBytes();
 			byte[] retArray = new byte[header.length + content.length];
 			System.arraycopy(header, 0, retArray, 0, header.length);
 			System.arraycopy(content, 0, retArray, header.length, content.length);
@@ -82,18 +61,16 @@ public class Utilities {
 
 	}
 	
+	//deserialize body
 	public static byte[] deserProxyItem(byte[] message) {
 		try {
 			String testStr = new String(message);
 			String[] strHeadersAndContent = testStr.split(DOUBLELINEBREAK);
-//			if (!strHeadersAndContent[0].toLowerCase().split(CONTENT_TYPE)[1].split(LINESEPARATOR)[0].equals(AMF_CONTENT_TYPE))
-//				return message;
 			String xml = AmfXmlConverter.convertAmfMessageToXml(getBody(message));
 			if (xml == null) {
 				return null;
 			}
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(xml.length()));
-			//return (headerWithUpdatedLength + LINESEPARATOR + X_BURP_DESERIALIZED + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
 			return (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -101,6 +78,7 @@ public class Utilities {
 		}
 	}
 	
+	//serialize body
 	public static byte[] serProxyItem(byte[] message) {
 
 		try {
@@ -110,7 +88,6 @@ public class Utilities {
 			if (content == null)
 				return null;
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(content.length));
-			//byte[] header = (headerWithUpdatedLength + LINESEPARATOR + X_BURP_SERIALIZED + LINESEPARATOR + LINESEPARATOR).getBytes();
 			byte[] header = (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR).getBytes();
 			byte[] retArray = new byte[header.length + content.length];
 			System.arraycopy(header, 0, retArray, 0, header.length);
