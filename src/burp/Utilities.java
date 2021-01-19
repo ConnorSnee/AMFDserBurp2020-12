@@ -53,6 +53,7 @@ public class Utilities {
 			}
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(xml.length()));
 			return (headerWithUpdatedLength + LINESEPARATOR + X_BURP_DESERIALIZED + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
+			//return (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return message;
@@ -69,6 +70,48 @@ public class Utilities {
 				return null;
 			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(content.length));
 			byte[] header = (headerWithUpdatedLength + LINESEPARATOR + X_BURP_SERIALIZED + LINESEPARATOR + LINESEPARATOR).getBytes();
+			//byte[] header = (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR).getBytes();
+			byte[] retArray = new byte[header.length + content.length];
+			System.arraycopy(header, 0, retArray, 0, header.length);
+			System.arraycopy(content, 0, retArray, header.length, content.length);
+			return retArray;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return message;
+		}
+
+	}
+	
+	public static byte[] deserProxyItem(byte[] message) {
+		try {
+			String testStr = new String(message);
+			String[] strHeadersAndContent = testStr.split(DOUBLELINEBREAK);
+//			if (!strHeadersAndContent[0].toLowerCase().split(CONTENT_TYPE)[1].split(LINESEPARATOR)[0].equals(AMF_CONTENT_TYPE))
+//				return message;
+			String xml = AmfXmlConverter.convertAmfMessageToXml(getBody(message));
+			if (xml == null) {
+				return null;
+			}
+			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(xml.length()));
+			//return (headerWithUpdatedLength + LINESEPARATOR + X_BURP_DESERIALIZED + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
+			return (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR + xml).getBytes();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return message;
+		}
+	}
+	
+	public static byte[] serProxyItem(byte[] message) {
+
+		try {
+			String strMessage = new String(message);
+			String[] strHeadersAndContent = strMessage.split(DOUBLELINEBREAK);
+			byte[] content = AmfXmlConverter.convertXmlToAmfMessage(strHeadersAndContent[1]);
+			if (content == null)
+				return null;
+			String headerWithUpdatedLength = strHeadersAndContent[0].replaceAll("Content-Length: .*", "Content-Length: " + String.valueOf(content.length));
+			//byte[] header = (headerWithUpdatedLength + LINESEPARATOR + X_BURP_SERIALIZED + LINESEPARATOR + LINESEPARATOR).getBytes();
+			byte[] header = (headerWithUpdatedLength + LINESEPARATOR + LINESEPARATOR).getBytes();
 			byte[] retArray = new byte[header.length + content.length];
 			System.arraycopy(header, 0, retArray, 0, header.length);
 			System.arraycopy(content, 0, retArray, header.length, content.length);
