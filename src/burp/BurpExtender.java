@@ -54,55 +54,52 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IContextMenuF
 		JMenuItem sendToIntruder = new JMenuItem("Send Deserialized AMF to Intruder");
 		JMenuItem sendToScanner = new JMenuItem("Scan AMF with with predefined insertion points");
 		List<JMenuItem> list = new ArrayList<JMenuItem>();
-		if (context == IContextMenuInvocation.CONTEXT_MESSAGE_EDITOR_REQUEST || 
-				context == IContextMenuInvocation.CONTEXT_MESSAGE_VIEWER_REQUEST) {
+		if (context == IContextMenuInvocation.CONTEXT_MESSAGE_EDITOR_REQUEST 
+				|| context == IContextMenuInvocation.CONTEXT_MESSAGE_VIEWER_REQUEST
+				|| context == IContextMenuInvocation.CONTEXT_PROXY_HISTORY) {
 			sendToIntruder.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					IRequestInfo info = helpers.analyzeRequest(invocation.getSelectedMessages()[0]);
-					byte[] request = invocation.getSelectedMessages()[0].getRequest();
-					try {
-						byte[] deserRequest = Utilities.deserializeProxyItem(request);
-						if (deserRequest == null) {
-							if (info.getUrl().getProtocol().equalsIgnoreCase("https")) {
-								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), true, request);
+					IHttpRequestResponse[] selectedMessages = invocation.getSelectedMessages();
+					for (IHttpRequestResponse iReqRes : selectedMessages) {
+						try {
+							IRequestInfo info = helpers.analyzeRequest(iReqRes);
+							byte[] request = iReqRes.getRequest();
+							byte[] deserRequest = Utilities.deserializeProxyItem(request);
+							if (deserRequest == null) {
+								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), 
+										(info.getUrl().getProtocol().equalsIgnoreCase("https") ? true : false), request);
+								callbacks.printOutput("AMF not detected, unmodified request sent to Intruder");
 							} else {
-								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), false, request);
+								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), 
+										(info.getUrl().getProtocol().equalsIgnoreCase("https") ? true : false), deserRequest);
 							}
-						} else {
-							if (info.getUrl().getProtocol().equalsIgnoreCase("https")) {
-								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), true, deserRequest);
-							} else {
-								callbacks.sendToIntruder(info.getUrl().getHost(), info.getUrl().getPort(), false, deserRequest);
-							}
+						} catch (Exception error) {
+							callbacks.printError(error.getMessage());
 						}
-					} catch (Exception error) {
-						callbacks.printError(error.getMessage());
 					}
 				}
 			});
 			sendToScanner.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					IRequestInfo info = helpers.analyzeRequest(invocation.getSelectedMessages()[0]);
-					byte[] request = invocation.getSelectedMessages()[0].getRequest();
-					try {
-						byte[] deserRequest = Utilities.deserializeProxyItem(request);
-						if (deserRequest == null) {
-							if (info.getUrl().getProtocol().equalsIgnoreCase("https")) {
-								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), true, request);
+					IHttpRequestResponse[] selectedMessages = invocation.getSelectedMessages();
+					for (IHttpRequestResponse iReqRes : selectedMessages) {
+						try {
+							IRequestInfo info = helpers.analyzeRequest(iReqRes);
+							byte[] request = iReqRes.getRequest();
+							byte[] deserRequest = Utilities.deserializeProxyItem(request);
+							if (deserRequest == null) {
+								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), 
+										(info.getUrl().getProtocol().equalsIgnoreCase("https") ? true : false), request);
+								callbacks.printOutput("AMF not detected, unmodified request sent to Scanner");
 							} else {
-								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), false, request);
+								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), 
+										(info.getUrl().getProtocol().equalsIgnoreCase("https") ? true : false), deserRequest);
 							}
-						} else {
-							if (info.getUrl().getProtocol().equalsIgnoreCase("https")) {
-								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), true, deserRequest);
-							} else {
-								callbacks.doActiveScan(info.getUrl().getHost(), info.getUrl().getPort(), false, deserRequest);
-							}
+						} catch (Exception error) {
+							callbacks.printError(error.getMessage());
 						}
-					} catch (Exception error) {
-						callbacks.printError(error.getMessage());
 					}
 				}
 			});
